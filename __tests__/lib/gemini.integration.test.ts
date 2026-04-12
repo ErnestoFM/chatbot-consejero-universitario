@@ -2,7 +2,9 @@ import dotenv from "dotenv";
 dotenv.config({ path: '.env.test' });
 import { getModel } from "@/lib/gemini";
 
-describe("Gemini Model Integration", () => {
+const describeIfApiKey = process.env.GEMINI_API_KEY ? describe : describe.skip;
+
+describeIfApiKey("Gemini Model Integration", () => {
   it("debe generar una respuesta válida usando el modelo gemini-pro y la API v1", async () => {
     const model = getModel();
     const chat = model.startChat({
