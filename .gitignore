@@ -46,3 +46,5 @@ CLAUDE.md
 *.tsbuildinfo
 next-env.d.ts
 .env.example
+
+.vercel/project.json
