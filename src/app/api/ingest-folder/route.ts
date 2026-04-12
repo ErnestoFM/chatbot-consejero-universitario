@@ -6,6 +6,7 @@ import ModeloConocimiento from "@/models/Conocimiento";
 import { getGeminiClient } from "@/lib/gemini";
 
 // Importación directa a lib para evitar el bug de index.js de pdf-parse
+// @ts-expect-error missing types for pdf-parse internal lib
 import pdfParse from "pdf-parse/lib/pdf-parse.js";
 
 // Función para dividir texto gigante en fragmentos más pequeños para un mejor Vector Search
