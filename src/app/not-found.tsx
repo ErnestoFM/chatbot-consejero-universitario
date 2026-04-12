@@ -10,7 +10,7 @@ export default function NotFound() {
         Volver al inicio
       </a>
       <div className="mt-8">
-        <img src="/404-illustration.svg" alt="Ilustración 404" className="w-64 mx-auto opacity-80" onError={e => (e.currentTarget.style.display = 'none')} />
+        <img src="/404-illustration.svg" alt="Ilustración 404" className="w-64 mx-auto opacity-80"/>
       </div>
     </div>
   );
