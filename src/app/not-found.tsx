@@ -1,3 +1,6 @@
+import Link from "next/link";
+import Image from "next/image";
+
 export default function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 text-center p-8">
@@ -6,11 +9,11 @@ export default function NotFound() {
       <p className="mb-6 text-gray-600 dark:text-gray-300">
         Lo sentimos, la página que buscas no existe o fue movida.
       </p>
-      <a href="/" className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-medium">
+      <Link href="/" className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-medium">
         Volver al inicio
-      </a>
+      </Link>
       <div className="mt-8">
-        <img src="/404-illustration.svg" alt="Ilustración 404" className="w-64 mx-auto opacity-80"/>
+        <Image src="/404-illustration.svg" alt="Ilustración 404" width={256} height={256} className="w-64 mx-auto opacity-80"/>
       </div>
     </div>
   );

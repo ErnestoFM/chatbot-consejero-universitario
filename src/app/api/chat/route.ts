@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
 import ChatModel from "@/models/Chat";
 import ModeloConocimiento from "@/models/Conocimiento";
-import { generateChatResponse, generateResponseWithFiles, ChatMessage, getGeminiClient, getGeminiClientV1 } from "@/lib/gemini";
+import { generateChatResponse, generateResponseWithFiles, ChatMessage } from "@/lib/gemini";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(request: NextRequest) {

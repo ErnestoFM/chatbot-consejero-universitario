@@ -1,4 +1,5 @@
-require('dotenv').config({ path: '.env.test' });
+import dotenv from "dotenv";
+dotenv.config({ path: '.env.test' });
 import { getModel } from "@/lib/gemini";
 
 describe("Gemini Model Integration", () => {

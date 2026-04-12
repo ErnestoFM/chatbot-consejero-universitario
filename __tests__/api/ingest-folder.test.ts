@@ -38,7 +38,6 @@ jest.mock("fs", () => ({
 jest.mock("pdf-parse/lib/pdf-parse.js", () => async () => ({ text: "contenido de prueba" }));
 
 import { GET } from "@/app/api/ingest-folder/route";
-import path from "path";
 
 describe("Ingest Folder API", () => {
   it("debe ignorar archivos PDF faltantes y continuar procesando los demás", async () => {
