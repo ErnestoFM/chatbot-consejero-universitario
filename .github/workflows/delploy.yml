@@ -1,0 +1,23 @@
+name: Despliegue a Vercel
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Desplegar a Producción
+    runs-on: ubuntu-latest
+    # Opcional: Solo desplegar si los tests pasaron previamente (si los unes en el mismo workflow)
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Desplegar en Vercel
+        uses: amondnet/vercel-action@v20
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }} # Token personal de Vercel
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }} # ID de tu equipo/usuario en Vercel
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }} # ID del proyecto en Vercel
+          vercel-args: "--prod" # Bandera para despliegue en producción

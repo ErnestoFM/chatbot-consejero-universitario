@@ -8,12 +8,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="es" className="h-full antialiased">
-      <body className="h-full flex flex-col bg-[#212121]">{children}</body>
+    // Agrega suppressHydrationWarning aquí
+    <html lang="es" className="h-full antialiased" suppressHydrationWarning>
+      {/* Y también agrégalo aquí en el body */}
+      <body 
+        className="h-full flex flex-col bg-[#212121]"
+        suppressHydrationWarning
+      >
+        {children}
+      </body>
     </html>
   );
 }
