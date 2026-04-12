@@ -5,8 +5,8 @@ import connectToDatabase from "@/lib/mongodb";
 import ModeloConocimiento from "@/models/Conocimiento";
 import { getGeminiClient } from "@/lib/gemini";
 
-// Importación tipo CommonJS para evitar el error ts(1192)
-const pdfParse = require("pdf-parse");
+// Importación directa a lib para evitar el bug de index.js de pdf-parse
+const pdfParse = require("pdf-parse/lib/pdf-parse.js");
 
 // Función para dividir texto gigante en fragmentos más pequeños para un mejor Vector Search
 function dividirEnFragmentos(texto: string, tamanoRecomendado: number = 1000): string[] {
@@ -53,7 +53,7 @@ export async function GET() {
 
     await connectToDatabase();
     const genAI = getGeminiClient();
-    const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
+    const embeddingModel = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
 
     let totalFragmentosProcesados = 0;
     const historialProceso = [];

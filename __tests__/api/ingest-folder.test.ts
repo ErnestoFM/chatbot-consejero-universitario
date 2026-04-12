@@ -35,7 +35,7 @@ jest.mock("fs", () => ({
     return Buffer.from("PDFDATA");
   }),
 }));
-jest.mock("pdf-parse", () => async () => ({ text: "contenido de prueba" }));
+jest.mock("pdf-parse/lib/pdf-parse.js", () => async () => ({ text: "contenido de prueba" }));
 
 import { GET } from "@/app/api/ingest-folder/route";
 import path from "path";
