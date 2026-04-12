@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
 import ChatModel from "@/models/Chat";
-import { generateChatResponse, generateResponseWithFiles, ChatMessage } from "@/lib/gemini";
+import ModeloConocimiento from "@/models/Conocimiento";
+import { generateChatResponse, generateResponseWithFiles, ChatMessage, getGeminiClient, getGeminiClientV1 } from "@/lib/gemini";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(request: NextRequest) {
@@ -52,6 +53,47 @@ export async function POST(request: NextRequest) {
         parts: [{ text: msg.content }],
       }));
 
+    let textosContexto = "";
+    try {
+      const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
+      const embedRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "models/gemini-embedding-001",
+            content: { parts: [{ text: message }] },
+          }),
+        }
+      );
+
+      if (!embedRes.ok) {
+        throw new Error(`Embedding error: ${embedRes.status} ${await embedRes.text()}`);
+      }
+
+      const embedData = await embedRes.json();
+      const preguntaVector: number[] = embedData.embedding.values;
+
+      // 2. Buscar en MongoDB el texto más relevante
+      const contextoRelevante = await ModeloConocimiento.aggregate([
+        {
+          $vectorSearch: {
+            index: "vector_index",
+            path: "embedding",
+            queryVector: preguntaVector,
+            numCandidates: 100,
+            limit: 3,
+          },
+        },
+      ]);
+
+      textosContexto = contextoRelevante.map((doc) => doc.texto).join("\n\n");
+    } catch (e) {
+      console.warn("Fallo en RAG (embedding o vector search):", e);
+      // El chat sigue funcionando sin contexto RAG
+    }
+
     let aiResponse: string;
 
     if (attachments && attachments.length > 0) {
@@ -63,12 +105,12 @@ export async function POST(request: NextRequest) {
         }));
 
       if (fileContents.length > 0) {
-        aiResponse = await generateResponseWithFiles(message, fileContents, history);
+        aiResponse = await generateResponseWithFiles(message, fileContents, history, textosContexto);
       } else {
-        aiResponse = await generateChatResponse(message, history);
+        aiResponse = await generateChatResponse(message, history, textosContexto);
       }
     } else {
-      aiResponse = await generateChatResponse(message, history);
+      aiResponse = await generateChatResponse(message, history, textosContexto);
     }
 
     const assistantMessage = {
@@ -94,7 +136,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Chat API error:", error);
     return NextResponse.json(
-      { error: "Error interno del servidor" },
+      { error: error instanceof Error ? error.message : "Error interno del servidor" },
       { status: 500 }
     );
   }

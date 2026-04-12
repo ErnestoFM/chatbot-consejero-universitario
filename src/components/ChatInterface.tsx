@@ -183,7 +183,7 @@ export default function ChatInterface() {
           </button>
           <div className="flex items-center gap-2">
             <span className="text-white font-semibold text-base">
-              Consejero Universitario
+              Tutor Universitario de Ética y Normativa en Ingenierias del CUTonalá
             </span>
           </div>
         </header>

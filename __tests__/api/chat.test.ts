@@ -30,6 +30,13 @@ jest.mock("@/models/Chat", () => ({
   },
 }));
 
+jest.mock("@/models/Conocimiento", () => ({
+  __esModule: true,
+  default: {
+    aggregate: jest.fn().mockResolvedValue([{ texto: "texto de prueba" }]),
+  },
+}));
+
 import { NextRequest } from "next/server";
 import { POST, GET, DELETE } from "@/app/api/chat/route";
 import ChatModel from "@/models/Chat";

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Consejero Universitario",
-  description: "Chatbot inteligente para orientación universitaria",
+  title: "Tutor Universitario de Ética y Normativa en Ingenierias del CUTonalá",
+  description: "Tutor Universitario Especializado en Casos Académicos y Normativos en el area de ingenierias en el centro universitario de tonalá",
 };
 
 export default function RootLayout({
