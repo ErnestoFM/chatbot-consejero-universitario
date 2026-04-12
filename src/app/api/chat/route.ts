@@ -25,7 +25,9 @@ export async function POST(request: NextRequest) {
 
     if (!chat) {
       const title =
-        message.length > 50 ? message.substring(0, 50) + "..." : message;
+        [...message].length > 50
+          ? [...message].slice(0, 50).join("") + "..."
+          : message;
       chat = await ChatModel.create({
         title,
         messages: [],
