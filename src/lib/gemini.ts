@@ -2,7 +2,6 @@ import { GoogleGenerativeAI, GenerativeModel, Part } from "@google/generative-ai
 import { CONSEJERO_SYSTEM_PROMPT } from "./prompt";
 
 let genAI: GoogleGenerativeAI | null = null;
-let genAIv1: GoogleGenerativeAI | null = null; // cliente v1 para embeddings
 
 export function getGeminiClient(): GoogleGenerativeAI {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -15,24 +14,10 @@ export function getGeminiClient(): GoogleGenerativeAI {
   return genAI;
 }
 
-// Cliente separado con v1 para modelos de embedding
-export function getGeminiClientV1(): GoogleGenerativeAI {
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-  if (!genAIv1) {
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured.");
-    }
-    genAIv1 = new GoogleGenerativeAI(GEMINI_API_KEY, {
-      apiVersion: "v1",
-    });
-  }
-  return genAIv1;
-}
-
 export function getModel(): GenerativeModel {
   const client = getGeminiClient();
   return client.getGenerativeModel({
-    model: "gemini-2.5-flash",
+    model: "gemini-2.0-flash",
   });
 }
 
@@ -60,7 +45,6 @@ export async function generateChatResponse(
     ? `${CONSEJERO_SYSTEM_PROMPT}\n\n[CONTEXTO OFICIAL DEL MANUAL]\n${contextText}`
     : CONSEJERO_SYSTEM_PROMPT;
 
-  // Insertar el systemInstruction como el primer mensaje del historial
   const fullHistory: ChatMessage[] = [
     { role: "user", parts: [{ text: systemInstruction }] },
     ...history,
@@ -83,7 +67,7 @@ export async function generateChatResponse(
 
 export async function generateResponseWithFiles(
   userMessage: string,
-  fileContents: Array<{ mimeType: string; data: string }> ,
+  fileContents: Array<{ mimeType: string; data: string }>,
   history: ChatMessage[] = [],
   contextText: string = ""
 ): Promise<string> {
@@ -91,7 +75,6 @@ export async function generateResponseWithFiles(
     ? `${CONSEJERO_SYSTEM_PROMPT}\n\n[CONTEXTO OFICIAL DEL MANUAL]\n${contextText}`
     : CONSEJERO_SYSTEM_PROMPT;
 
-  // Insertar el systemInstruction como el primer mensaje del historial
   const fullHistory: ChatMessage[] = [
     { role: "user", parts: [{ text: systemInstruction }] },
     ...history,
