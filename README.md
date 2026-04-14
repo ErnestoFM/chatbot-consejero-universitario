@@ -18,7 +18,7 @@ Un chatbot inteligente para orientación universitaria, conectado con la API de 
 - **Frontend/Backend**: Next.js 16 con App Router y React 19
 - **Estilos**: Tailwind CSS
 - **Base de datos**: MongoDB con Mongoose
-- **IA**: Google Gemini API (`gemini-1.5-flash`)
+- **IA**: Google Gemini API (`gemini-pro`)
 - **Testing**: Jest + React Testing Library (metodología TDD)
 
 ## 📋 Requisitos previos
@@ -125,12 +125,12 @@ setDocumentContext("Contenido extraído del PDF...");
 
 ## 🔒 Variables de entorno
 
-| Variable         | Descripción                                                                                    |
-| ---------------- | ---------------------------------------------------------------------------------------------- |
-| `GEMINI_API_KEY` | API Key de Google Gemini                                                                       |
-| `MONGODB_URI`    | URI de conexión a MongoDB                                                                      |
-| `GEMINI_MODEL`   | Modelo de Gemini a usar (default: `gemini-1.5-flash`). Usa este para mejor cuota en free tier. |
-| `JWT_SECRET`     | Clave para firmar el token de sesión                                                           |
+| Variable         | Descripción                                                                                                                            |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `GEMINI_API_KEY` | API Key de Google Gemini                                                                                                               |
+| `MONGODB_URI`    | URI de conexión a MongoDB                                                                                                              |
+| `GEMINI_MODEL`   | Modelo de Gemini a usar (default: `gemini-pro`). Si uno falla con 404, cambia el valor por un modelo soportado y reinicia el servidor. |
+| `JWT_SECRET`     | Clave para firmar el token de sesión                                                                                                   |
 
 ## 🔐 Flujo de autenticación
 
@@ -141,10 +141,7 @@ setDocumentContext("Contenido extraído del PDF...");
 
 ## ⚠️ Límites de API de Gemini (Free Tier)
 
-Por defecto, el proyecto usa **`gemini-1.5-flash`** que tiene mejor cuota en free tier que `gemini-2.0-flash`:
-
-- ~15,000 requests/día
-- ~1 millón de tokens/minuto
+Por defecto, el proyecto usa **`gemini-pro`** porque es estable y soportado en `v1beta`.
 
 Si ves error **"Cuota de Gemini excedida"**:
 
@@ -155,6 +152,6 @@ Si ves error **"Cuota de Gemini excedida"**:
 Para cambiar de modelo:
 
 ```env
-GEMINI_MODEL=gemini-1.5-pro  # Mejor calidad, más tokens
+GEMINI_MODEL=gemini-pro
 # O tu modelo preferido que tenga disponibilidad
 ```

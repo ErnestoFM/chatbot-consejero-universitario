@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
 import ChatModel from "@/models/Chat";
 import ModeloConocimiento from "@/models/Conocimiento";
-import { generateChatResponse, generateResponseWithFiles, ChatMessage } from "@/lib/gemini";
+import {
+  generateChatResponse,
+  generateResponseWithFiles,
+  ChatMessage,
+  isModelNotFoundError,
+} from "@/lib/gemini";
 import { v4 as uuidv4 } from "uuid";
 import { getAuthUserIdFromRequest } from "@/lib/auth";
 
@@ -151,6 +156,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Cuota de Gemini excedida. Por favor, intenta en unos minutos o crea un plan pagado." },
         { status: 429 }
+      );
+    }
+
+    if (isModelNotFoundError(error)) {
+      return NextResponse.json(
+        {
+          error:
+            "El modelo de Gemini configurado no está disponible. Cambia GEMINI_MODEL en .env.local (por ejemplo: gemini-pro) y reinicia el servidor.",
+        },
+        { status: 500 }
       );
     }
 

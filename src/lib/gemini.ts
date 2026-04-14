@@ -16,7 +16,7 @@ export function getGeminiClient(): GoogleGenerativeAI {
 
 export function getModel(): GenerativeModel {
   const client = getGeminiClient();
-  const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+  const modelName = process.env.GEMINI_MODEL || "gemini-pro";
   return client.getGenerativeModel({
     model: modelName,
   });
@@ -29,6 +29,16 @@ export function isQuotaExceededError(error: unknown): boolean {
     error.message.includes("Too Many Requests") ||
     error.message.includes("Quota exceeded") ||
     error.message.includes("quota")
+  );
+}
+
+export function isModelNotFoundError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return (
+    error.message.includes("404") ||
+    error.message.includes("is not found for API version") ||
+    error.message.includes("not supported for generateContent") ||
+    error.message.includes("models/")
   );
 }
 
