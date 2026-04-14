@@ -17,6 +17,7 @@ export interface IMessage {
 }
 
 export interface IChat extends Document {
+  userId: string;
   title: string;
   messages: IMessage[];
   createdAt: Date;
@@ -41,6 +42,7 @@ const MessageSchema = new Schema<IMessage>({
 
 const ChatSchema = new Schema<IChat>(
   {
+    userId: { type: String, required: true, index: true },
     title: { type: String, required: true, default: "Nueva conversación" },
     messages: { type: [MessageSchema], default: [] },
   },

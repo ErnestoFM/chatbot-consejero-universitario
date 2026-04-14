@@ -1,5 +1,5 @@
-import ChatInterface from "@/components/ChatInterface";
+import AuthShell from "@/components/AuthShell";
 
 export default function Home() {
-  return <ChatInterface />;
+  return <AuthShell />;
 }

@@ -16,9 +16,20 @@ export function getGeminiClient(): GoogleGenerativeAI {
 
 export function getModel(): GenerativeModel {
   const client = getGeminiClient();
+  const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
   return client.getGenerativeModel({
-    model: "gemini-2.0-flash",
+    model: modelName,
   });
+}
+
+export function isQuotaExceededError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return (
+    error.message.includes("429") ||
+    error.message.includes("Too Many Requests") ||
+    error.message.includes("Quota exceeded") ||
+    error.message.includes("quota")
+  );
 }
 
 let documentContext = "";

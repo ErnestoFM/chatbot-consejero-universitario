@@ -8,6 +8,8 @@ Un chatbot inteligente para orientación universitaria, conectado con la API de 
 - **4 temas de conversación iniciales**: Trámites Académicos, Asesoría Emocional, Quejas y Reclamos, Orientación Vocacional
 - **Carga de archivos**: Soporte para imágenes, videos y documentos PDF como evidencia
 - **Historial de conversaciones**: Guardado en MongoDB con sidebar de navegación
+- **Autenticación de usuarios**: Registro/Login con sesión en cookie HTTP-only
+- **Logout y expiración de sesión**: Cierre manual y redirección automática al login cuando la sesión vence
 - **IA con Gemini**: Integración con la API de Gemini de Google
 - **Soporte para PDFs**: Arquitectura preparada para RAG (Retrieval-Augmented Generation)
 
@@ -28,12 +30,14 @@ Un chatbot inteligente para orientación universitaria, conectado con la API de 
 ## ⚙️ Configuración
 
 1. **Instala dependencias**:
+
    ```bash
    npm install
    ```
 
 2. **Configura las variables de entorno**:
    Copia `.env.local.example` a `.env.local` y rellena los valores:
+
    ```bash
    cp .env.local.example .env.local
    ```
@@ -41,9 +45,11 @@ Un chatbot inteligente para orientación universitaria, conectado con la API de 
    ```env
    GEMINI_API_KEY=tu_api_key_de_gemini
    MONGODB_URI=mongodb://localhost:27017/chatbot-consejero
+   JWT_SECRET=una_clave_larga_y_segura
    ```
 
 3. **Ejecuta el servidor de desarrollo**:
+
    ```bash
    npm run dev
    ```
@@ -119,7 +125,36 @@ setDocumentContext("Contenido extraído del PDF...");
 
 ## 🔒 Variables de entorno
 
-| Variable | Descripción |
-|----------|-------------|
-| `GEMINI_API_KEY` | API Key de Google Gemini |
-| `MONGODB_URI` | URI de conexión a MongoDB |
+| Variable         | Descripción                                                                                    |
+| ---------------- | ---------------------------------------------------------------------------------------------- |
+| `GEMINI_API_KEY` | API Key de Google Gemini                                                                       |
+| `MONGODB_URI`    | URI de conexión a MongoDB                                                                      |
+| `GEMINI_MODEL`   | Modelo de Gemini a usar (default: `gemini-1.5-flash`). Usa este para mejor cuota en free tier. |
+| `JWT_SECRET`     | Clave para firmar el token de sesión                                                           |
+
+## 🔐 Flujo de autenticación
+
+- El registro crea el usuario y abre sesión automáticamente.
+- El login usa cookie HTTP-only con JWT.
+- Si la sesión expira, la app muestra "Sesión expirada, inicia sesión de nuevo" y vuelve al formulario.
+- El botón "Cerrar sesión" borra la cookie y regresa al login.
+
+## ⚠️ Límites de API de Gemini (Free Tier)
+
+Por defecto, el proyecto usa **`gemini-1.5-flash`** que tiene mejor cuota en free tier que `gemini-2.0-flash`:
+
+- ~15,000 requests/día
+- ~1 millón de tokens/minuto
+
+Si ves error **"Cuota de Gemini excedida"**:
+
+1. Espera unos minutos y reintentar (el rate limit se reinicia cada minuto).
+2. Crea un plan pagado en [Google AI Studio](https://makersuite.google.com/app/apikeys).
+3. O usa otro modelo ajustando `GEMINI_MODEL` en `.env.local`.
+
+Para cambiar de modelo:
+
+```env
+GEMINI_MODEL=gemini-1.5-pro  # Mejor calidad, más tokens
+# O tu modelo preferido que tenga disponibilidad
+```

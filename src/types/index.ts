@@ -16,6 +16,7 @@ export interface Attachment {
 
 export interface Chat {
   _id?: string;
+  userId: string;
   title: string;
   messages: Message[];
   createdAt: Date;

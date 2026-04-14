@@ -24,10 +24,16 @@ jest.mock("@/models/Chat", () => ({
   __esModule: true,
   default: {
     findById: jest.fn(),
+    findOne: jest.fn(),
     create: jest.fn(),
     find: jest.fn(),
     findByIdAndDelete: jest.fn(),
+    findOneAndDelete: jest.fn(),
   },
+}));
+
+jest.mock("@/lib/auth", () => ({
+  getAuthUserIdFromRequest: jest.fn().mockReturnValue("user-1"),
 }));
 
 jest.mock("@/models/Conocimiento", () => ({
@@ -40,8 +46,10 @@ jest.mock("@/models/Conocimiento", () => ({
 import { NextRequest } from "next/server";
 import { POST, GET, DELETE } from "@/app/api/chat/route";
 import ChatModel from "@/models/Chat";
+import { getAuthUserIdFromRequest } from "@/lib/auth";
 
 const mockChatModel = ChatModel as jest.Mocked<typeof ChatModel>;
+const mockGetAuthUserIdFromRequest = getAuthUserIdFromRequest as jest.Mock;
 
 function createRequest(
   method: string,
@@ -65,6 +73,14 @@ function createRequest(
 describe("Chat API - POST", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetAuthUserIdFromRequest.mockReturnValue("user-1");
+  });
+
+  it("returns 401 when user is not authenticated", async () => {
+    mockGetAuthUserIdFromRequest.mockReturnValue(null);
+    const request = createRequest("POST", { message: "Hola" });
+    const response = await POST(request);
+    expect(response.status).toBe(401);
   });
 
   it("returns 400 when message is missing", async () => {
@@ -113,7 +129,7 @@ describe("Chat API - POST", () => {
     };
 
     (mockChatModel.create as jest.Mock).mockResolvedValue(mockChat);
-    (mockChatModel.findById as jest.Mock).mockResolvedValue(null);
+    (mockChatModel.findOne as jest.Mock).mockResolvedValue(null);
 
     const request = createRequest("POST", {
       message: "¿Qué trámites académicos puedo realizar?",
@@ -121,13 +137,23 @@ describe("Chat API - POST", () => {
     const response = await POST(request);
 
     expect(response.status).toBe(200);
-    expect(mockChatModel.create).toHaveBeenCalled();
+    expect(mockChatModel.create).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "user-1" })
+    );
   });
 });
 
 describe("Chat API - GET", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetAuthUserIdFromRequest.mockReturnValue("user-1");
+  });
+
+  it("returns 401 when user is not authenticated", async () => {
+    mockGetAuthUserIdFromRequest.mockReturnValue(null);
+    const request = createRequest("GET");
+    const response = await GET(request);
+    expect(response.status).toBe(401);
   });
 
   it("returns a list of chats when no chatId is provided", async () => {
@@ -146,12 +172,13 @@ describe("Chat API - GET", () => {
     const response = await GET(request);
 
     expect(response.status).toBe(200);
+    expect(mockChatModel.find).toHaveBeenCalledWith({ userId: "user-1" });
     const data = await response.json();
     expect(data.chats).toBeDefined();
   });
 
   it("returns 404 when chat is not found", async () => {
-    (mockChatModel.findById as jest.Mock).mockResolvedValue(null);
+    (mockChatModel.findOne as jest.Mock).mockResolvedValue(null);
 
     const request = createRequest("GET", undefined, { chatId: "nonexistent-id" });
     const response = await GET(request);
@@ -165,7 +192,7 @@ describe("Chat API - GET", () => {
       title: "Test chat",
       messages: [],
     };
-    (mockChatModel.findById as jest.Mock).mockResolvedValue(mockChat);
+    (mockChatModel.findOne as jest.Mock).mockResolvedValue(mockChat);
 
     const request = createRequest("GET", undefined, { chatId: "chat1" });
     const response = await GET(request);
@@ -180,6 +207,14 @@ describe("Chat API - GET", () => {
 describe("Chat API - DELETE", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetAuthUserIdFromRequest.mockReturnValue("user-1");
+  });
+
+  it("returns 401 when user is not authenticated", async () => {
+    mockGetAuthUserIdFromRequest.mockReturnValue(null);
+    const request = createRequest("DELETE", undefined, { chatId: "chat1" });
+    const response = await DELETE(request);
+    expect(response.status).toBe(401);
   });
 
   it("returns 400 when chatId is not provided", async () => {
@@ -190,13 +225,26 @@ describe("Chat API - DELETE", () => {
   });
 
   it("deletes a chat successfully", async () => {
-    (mockChatModel.findByIdAndDelete as jest.Mock).mockResolvedValue({});
+    (mockChatModel.findOneAndDelete as jest.Mock).mockResolvedValue({});
 
     const request = createRequest("DELETE", undefined, { chatId: "chat1" });
     const response = await DELETE(request);
 
     expect(response.status).toBe(200);
+    expect(mockChatModel.findOneAndDelete).toHaveBeenCalledWith({
+      _id: "chat1",
+      userId: "user-1",
+    });
     const data = await response.json();
     expect(data.success).toBe(true);
+  });
+
+  it("returns 404 when deleting a chat that does not belong to the user", async () => {
+    (mockChatModel.findOneAndDelete as jest.Mock).mockResolvedValue(null);
+
+    const request = createRequest("DELETE", undefined, { chatId: "chat-ajeno" });
+    const response = await DELETE(request);
+
+    expect(response.status).toBe(404);
   });
 });

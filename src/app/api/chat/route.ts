@@ -4,9 +4,15 @@ import ChatModel from "@/models/Chat";
 import ModeloConocimiento from "@/models/Conocimiento";
 import { generateChatResponse, generateResponseWithFiles, ChatMessage } from "@/lib/gemini";
 import { v4 as uuidv4 } from "uuid";
+import { getAuthUserIdFromRequest } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    const userId = getAuthUserIdFromRequest(request);
+    if (!userId) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { message, chatId, attachments = [] } = body;
 
@@ -21,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     let chat;
     if (chatId) {
-      chat = await ChatModel.findById(chatId);
+      chat = await ChatModel.findOne({ _id: chatId, userId });
     }
 
     if (!chat) {
@@ -30,6 +36,7 @@ export async function POST(request: NextRequest) {
           ? [...message].slice(0, 50).join("") + "..."
           : message;
       chat = await ChatModel.create({
+        userId,
         title,
         messages: [],
       });
@@ -135,6 +142,18 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Chat API error:", error);
+
+    if (error instanceof Error && (
+      error.message.includes("429") ||
+      error.message.includes("Quota exceeded") ||
+      error.message.includes("Too Many Requests")
+    )) {
+      return NextResponse.json(
+        { error: "Cuota de Gemini excedida. Por favor, intenta en unos minutos o crea un plan pagado." },
+        { status: 429 }
+      );
+    }
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Error interno del servidor" },
       { status: 500 }
@@ -144,13 +163,18 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const userId = getAuthUserIdFromRequest(request);
+    if (!userId) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const chatId = searchParams.get("chatId");
 
     await connectToDatabase();
 
     if (chatId) {
-      const chat = await ChatModel.findById(chatId);
+      const chat = await ChatModel.findOne({ _id: chatId, userId });
       if (!chat) {
         return NextResponse.json(
           { error: "Conversación no encontrada" },
@@ -160,7 +184,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ chat });
     }
 
-    const chats = await ChatModel.find({})
+    const chats = await ChatModel.find({ userId })
       .select("_id title createdAt updatedAt")
       .sort({ updatedAt: -1 })
       .limit(50);
@@ -177,6 +201,11 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const userId = getAuthUserIdFromRequest(request);
+    if (!userId) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const chatId = searchParams.get("chatId");
 
@@ -188,7 +217,13 @@ export async function DELETE(request: NextRequest) {
     }
 
     await connectToDatabase();
-    await ChatModel.findByIdAndDelete(chatId);
+    const deletedChat = await ChatModel.findOneAndDelete({ _id: chatId, userId });
+    if (!deletedChat) {
+      return NextResponse.json(
+        { error: "Conversación no encontrada" },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

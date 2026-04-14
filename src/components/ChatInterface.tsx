@@ -20,7 +20,15 @@ interface FullChat {
   messages: Message[];
 }
 
-export default function ChatInterface() {
+interface ChatInterfaceProps {
+  onUnauthorized?: (message: string) => void;
+  onLogout?: () => Promise<void> | void;
+}
+
+export default function ChatInterface({
+  onUnauthorized,
+  onLogout,
+}: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
@@ -28,9 +36,18 @@ export default function ChatInterface() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const handleUnauthorized = useCallback(() => {
+    onUnauthorized?.("Sesión expirada, inicia sesión de nuevo");
+  }, [onUnauthorized]);
+
   const fetchChats = useCallback(async () => {
     try {
       const response = await fetch("/api/chat");
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
       if (response.ok) {
         const data = await response.json();
         setChats(data.chats || []);
@@ -38,7 +55,7 @@ export default function ChatInterface() {
     } catch (err) {
       console.error("Error fetching chats:", err);
     }
-  }, []);
+  }, [handleUnauthorized]);
 
   useEffect(() => {
     fetchChats();
@@ -47,6 +64,11 @@ export default function ChatInterface() {
   const handleSelectChat = async (chatId: string) => {
     try {
       const response = await fetch(`/api/chat?chatId=${chatId}`);
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
       if (response.ok) {
         const data: { chat: FullChat } = await response.json();
         setCurrentChatId(data.chat._id);
@@ -68,7 +90,12 @@ export default function ChatInterface() {
 
   const handleDeleteChat = async (chatId: string) => {
     try {
-      await fetch(`/api/chat?chatId=${chatId}`, { method: "DELETE" });
+      const response = await fetch(`/api/chat?chatId=${chatId}`, { method: "DELETE" });
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
       if (currentChatId === chatId) {
         handleNewChat();
       }
@@ -108,6 +135,12 @@ export default function ChatInterface() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          handleUnauthorized();
+          setMessages((prev) => prev.slice(0, -1));
+          return;
+        }
+
         const errData = await response.json();
         throw new Error(errData.error || "Error al enviar el mensaje");
       }
@@ -185,6 +218,15 @@ export default function ChatInterface() {
             <span className="text-white font-semibold text-base">
               Tutor Universitario de Ética y Normativa en Ingenierias del CUTonalá
             </span>
+            {onLogout && (
+              <button
+                type="button"
+                onClick={onLogout}
+                className="ml-3 rounded-md border border-white/15 px-3 py-1 text-sm text-gray-200 hover:bg-white/10"
+              >
+                Cerrar sesión
+              </button>
+            )}
           </div>
         </header>
 
