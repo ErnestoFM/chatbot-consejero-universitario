@@ -87,8 +87,7 @@ export async function GET() {
           await ModeloConocimiento.create({
             texto: fragmento,
             embedding,
-            // Podrías añadir un campo archivoFuente al esquema de mongoose después si lo deseas:
-            // fuente: archivo 
+            fuente: archivo,
           });
 
           generadosPDF++;

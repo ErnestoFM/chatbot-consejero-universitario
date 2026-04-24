@@ -86,6 +86,10 @@ export async function POST(request: NextRequest) {
 
       const embedData = await embedRes.json();
       const preguntaVector: number[] = embedData.embedding.values;
+      const messageLower = message.toLowerCase();
+      const mentionsProfesoresApoyo =
+        messageLower.includes("profesores_de_apoyo") ||
+        messageLower.includes("profesores de apoyo");
 
       // 2. Buscar en MongoDB el texto más relevante
       const contextoRelevante = await ModeloConocimiento.aggregate([
@@ -94,13 +98,50 @@ export async function POST(request: NextRequest) {
             index: "vector_index",
             path: "embedding",
             queryVector: preguntaVector,
-            numCandidates: 100,
-            limit: 3,
+            numCandidates: 200,
+            limit: 8,
           },
         },
       ]);
 
-      textosContexto = contextoRelevante.map((doc) => doc.texto).join("\n\n");
+      const vectorChunks = contextoRelevante
+        .map((doc) => doc.texto as string)
+        .filter(Boolean);
+
+      // Fallback textual para preguntas de nombres/listados cuando el vector search no trae suficientes bloques útiles.
+      const fallbackRegex =
+        mentionsProfesoresApoyo || messageLower.includes("profesor")
+          ? /profesor|docente|coordinador|tutor|enlace/i
+          : null;
+
+      const fallbackOr: Array<Record<string, RegExp>> = [];
+
+      if (mentionsProfesoresApoyo) {
+        fallbackOr.push({ fuente: /profesores[_\s-]*de[_\s-]*apoyo\.pdf/i });
+      }
+
+      if (fallbackRegex) {
+        fallbackOr.push({ texto: fallbackRegex });
+      }
+
+      const fallbackChunks =
+        fallbackOr.length > 0
+          ? await ModeloConocimiento.find({ $or: fallbackOr })
+              .sort({ updatedAt: -1 })
+              .limit(8)
+              .select("texto fuente")
+              .lean()
+          : [];
+
+      const fallbackTextos = fallbackChunks
+        .map((doc) => doc.texto as string)
+        .filter(Boolean);
+
+      const contextoUnico = Array.from(
+        new Set([...vectorChunks, ...fallbackTextos])
+      ).slice(0, 12);
+
+      textosContexto = contextoUnico.join("\n\n");
     } catch (e) {
       console.warn("Fallo en RAG (embedding o vector search):", e);
       // El chat sigue funcionando sin contexto RAG
